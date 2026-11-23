@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Accueil · Soirée Brésilienne</title>
+<meta name="theme-color" content="#0E1330">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{--nuit:#0E1330;--or:#D6AF5C;--or-clair:#F0D28C;--creme:#F5F0E6;--ok:#1FA34A;--ko:#D93A3A;--warn:#F28A1E}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--nuit);color:var(--creme);font-family:Montserrat,system-ui,sans-serif;min-height:100svh;text-align:center}
+header{padding:16px;font-size:12px;letter-spacing:.25em;font-weight:700;color:var(--or-clair);display:flex;justify-content:space-between;align-items:center}
+header button{font:inherit;font-size:11px;letter-spacing:.1em;color:var(--creme);opacity:.7;background:none;border:0;text-decoration:underline}
+#stats{font-size:13px;opacity:.85;padding:0 16px 10px;letter-spacing:.05em}
+#reader{width:min(92vw,420px);margin:0 auto;border-radius:16px;overflow:hidden;border:2px solid rgba(214,175,92,.5)}
+#result{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:10}
+#result.show{display:flex}
+#result.ok{background:var(--ok)}#result.ko{background:var(--ko)}#result.warn{background:var(--warn)}
+#result .icon{font-size:84px;line-height:1}
+#result .name{font-size:34px;font-weight:800;margin-top:12px}
+#result .team{font-size:18px;font-weight:700;margin-top:6px;opacity:.95}
+#result .msg{font-size:17px;margin-top:16px;font-weight:600;line-height:1.4}
+#result .next{margin-top:30px;font-size:14px;opacity:.9}
+.manual{margin:18px auto;display:flex;gap:8px;justify-content:center;padding:0 16px}
+input{height:48px;border-radius:10px;border:1px solid rgba(214,175,92,.6);background:rgba(255,255,255,.06);color:var(--creme);font:inherit;font-size:20px;text-align:center;letter-spacing:.2em;width:150px;text-transform:uppercase}
+.btn{height:48px;padding:0 20px;border-radius:999px;border:0;font:inherit;font-weight:800;letter-spacing:.1em;background:linear-gradient(180deg,var(--or-clair),var(--or));color:var(--nuit)}
+#pinbox{padding:60px 20px}
+#pinbox p{margin-bottom:16px;font-size:15px}
+.hint{font-size:12px;opacity:.65;margin-top:8px;padding:0 20px}
+</style>
+</head>
+<body>
+<header><span>ACCUEIL · SOIRÉE BRÉSILIENNE</span><button id="logout">changer de code</button></header>
+
+<div id="pinbox" hidden>
+  <p>Code accueil</p>
+  <input id="pin" inputmode="numeric" maxlength="8" autocomplete="off">
+  <div style="margin-top:14px"><button class="btn" id="pinok">VALIDER</button></div>
+  <p class="hint" id="pinerr"></p>
+</div>
+
+<div id="main" hidden>
+  <div id="stats">…</div>
+  <div id="reader"></div>
+  <div class="manual"><input id="manual" maxlength="5" placeholder="CODE" autocomplete="off"><button class="btn" id="go">OK</button></div>
+  <p class="hint">Pas de QR ? Tapez le code à 5 lettres écrit sous le QR de l'invité.</p>
+</div>
+
+<div id="result"><div class="icon" id="r-icon"></div><div class="name" id="r-name"></div><div class="team" id="r-team"></div><div class="msg" id="r-msg"></div><div class="next">Touchez pour scanner le suivant</div></div>
+
+<script src="config.js"></script>
+<script>
+const API_URL = window.API_URL || ""; // réglé dans config.js
+let PIN = ""; try{ PIN = localStorage.getItem('sb26pin')||""; }catch(e){}
+let busy = false, scanner = null;
+
+async function api(body){
+  const r = await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});
+  return r.json();
+}
+function show(id){ document.getElementById('pinbox').hidden = id!=='pin'; document.getElementById('main').hidden = id!=='main'; }
+
+async function login(p){
+  const j = await api({action:"stats", pin:p}).catch(()=>({ok:false,error:"pas de connexion"}));
+  if(!j.ok){ document.getElementById('pinerr').textContent = j.error||"code faux"; show('pin'); return; }
+  PIN = p; try{ localStorage.setItem('sb26pin',p); }catch(e){}
+  show('main'); renderStats(j); startScanner();
+  // QR scanné avec l'appareil photo du téléphone : la page s'ouvre avec ?c=CODE et valide tout de suite.
+  const c = new URLSearchParams(location.search).get('c');
+  if(c){ history.replaceState(null,'',location.pathname); check(c); }
+}
+function renderStats(j){ document.getElementById('stats').textContent = `${j.presents} présents · ${j.oui} confirmés · ${j.invites} invités`; }
+async function refreshStats(){ const j = await api({action:"stats",pin:PIN}).catch(()=>null); if(j&&j.ok) renderStats(j); }
+
+// Accepte : l'URL du QR (…/accueil.html?c=CODE), l'ancien format SB26:CODE, ou le code tapé.
+function codeOf(raw){
+  raw = String(raw||'').trim();
+  try{ const c = new URL(raw).searchParams.get('c'); if(c) return c.toUpperCase(); }catch(e){}
+  return raw.toUpperCase().replace(/^SB26:/,'').replace(/[^A-Z0-9]/g,'').slice(0,5);
+}
+async function check(raw){
+  if(busy) return; busy = true; raw = codeOf(raw);
+  if(scanner) try{ scanner.pause(true); }catch(e){}
+  const res = document.getElementById('result');
+  let j; try{ j = await api({action:"checkin", pin:PIN, i:raw}); }catch(e){ j = {ok:false,error:"pas de connexion, réessayez"}; }
+  res.className = 'show ' + (!j.ok ? 'ko' : j.deja ? 'warn' : 'ok');
+  document.getElementById('r-icon').textContent = !j.ok ? '✕' : j.deja ? '!' : '✓';
+  document.getElementById('r-name').textContent = j.ok ? `${j.prenom||''} ${j.nom||''}`.trim() : 'REFUSÉ';
+  document.getElementById('r-team').textContent = j.ok ? (j.equipe||'') : '';
+  document.getElementById('r-msg').textContent = !j.ok ? j.error : j.deja ? `Déjà entré(e) à ${j.deja.split(' ').pop()}. Vérifiez la personne.` : (j.reponse==='oui' ? 'Bienvenue !' : 'Bienvenue ! (n’avait pas confirmé)');
+  if(navigator.vibrate) navigator.vibrate(j.ok && !j.deja ? 80 : [80,60,80]);
+  refreshStats();
+}
+document.getElementById('result').addEventListener('click', ()=>{
+  document.getElementById('result').className=''; busy=false;
+  if(scanner) try{ scanner.resume(); }catch(e){}
+});
+function startScanner(){
+  if(scanner || !window.Html5Qrcode) return;
+  scanner = new Html5Qrcode("reader");
+  scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:240,height:240}}, txt=>check(txt), ()=>{})
+    .catch(()=>{ document.getElementById('reader').innerHTML = '<p class="hint" style="padding:30px">Caméra bloquée. Ouvrez cette page dans Chrome ou Safari (pas dans WhatsApp ou Teams) et autorisez la caméra. Ou scannez les QR avec l’appareil photo du téléphone.</p>'; });
+}
+document.getElementById('go').addEventListener('click', ()=>{ const v = document.getElementById('manual').value.trim(); if(v){ document.getElementById('manual').value=''; check(v);} });
+document.getElementById('pinok').addEventListener('click', ()=>login(document.getElementById('pin').value.trim()));
+document.getElementById('logout').addEventListener('click', ()=>{ try{localStorage.removeItem('sb26pin')}catch(e){} location.reload(); });
+if(!API_URL){ document.body.insertAdjacentHTML('beforeend','<p class="hint" style="padding:40px">Page pas encore reliée (API_URL vide).</p>'); }
+else if(PIN) login(PIN); else show('pin');
+</script>
+</body>
+</html>
