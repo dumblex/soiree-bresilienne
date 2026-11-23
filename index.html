@@ -54,19 +54,30 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 .flap::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#2a3375,#171e4a);clip-path:polygon(0 0,100% 0,50% 100%);border-radius:10px 10px 0 0}
 .flap::after{content:"";position:absolute;inset:0;clip-path:polygon(0 0,100% 0,50% 100%);
   background:linear-gradient(180deg,transparent 0 calc(100% - 2px),var(--or) 0)}
-/* ruban Brésil */
-.ribbon{position:absolute;top:0;bottom:0;left:50%;width:16px;transform:translateX(-50%);z-index:5;
-  background:linear-gradient(90deg,var(--vert) 0 35%,var(--jaune) 35% 65%,var(--vert) 65%);box-shadow:0 0 8px rgba(0,0,0,.35);transition:transform .5s ease, opacity .4s ease}
-.seal{position:absolute;left:50%;top:60%;width:74px;height:74px;transform:translate(-50%,-50%);z-index:6;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#ffe7a8,var(--or) 45%,#9c7428 100%);box-shadow:0 6px 16px rgba(0,0,0,.45), inset 0 0 0 4px rgba(255,255,255,.15);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;color:#3a2a0a;transition:transform .5s ease, opacity .4s ease}
-.seal i{font-style:normal;font-weight:800;font-size:18px;letter-spacing:.02em;line-height:1}
-.seal em{font-style:normal;font-size:8px;font-weight:700;letter-spacing:.18em;margin-top:3px}
-.env.open .seal{transform:translate(-50%,-50%) scale(.2) rotate(40deg);opacity:0}
-.env.open .ribbon{transform:translateX(-50%) scaleY(0);opacity:0}
+/* ruban Brésil en croix + nœud */
+.ribbon{position:absolute;z-index:5;box-shadow:0 0 8px rgba(0,0,0,.35);transition:transform .55s cubic-bezier(.6,0,.4,1), opacity .4s ease .2s}
+.ribbon.v{top:0;bottom:0;left:50%;width:16px;margin-left:-8px;background:linear-gradient(90deg,var(--vert) 0 35%,var(--jaune) 35% 65%,var(--vert) 65%)}
+.ribbon.h{left:0;right:0;top:58%;height:16px;margin-top:-8px;background:linear-gradient(180deg,var(--vert) 0 35%,var(--jaune) 35% 65%,var(--vert) 65%)}
+.bow{position:absolute;left:50%;top:58%;width:110px;height:72px;margin:-38px 0 0 -55px;z-index:6;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));
+  transition:transform .5s cubic-bezier(.5,-.4,.6,1), opacity .35s ease .15s;animation:bowWiggle 3.2s ease-in-out infinite}
+@keyframes bowWiggle{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-6deg)}90%{transform:rotate(5deg)}95%{transform:rotate(-2deg)}}
+.env{animation:float 3.6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+.env.untie,.env.open{animation:none}
+.env.untie .bow{animation:none;transform:translateY(-40px) scale(1.25) rotate(-12deg);opacity:0}
+.env.untie .ribbon.v{transform:scaleY(0)}
+.env.untie .ribbon.h{transform:scaleX(0)}
+.env.untie .ribbon{opacity:0}
 .env.open .flap{transform:rotateX(180deg);z-index:1}
-#intro.opening .tap{opacity:0;animation:none;transition:opacity .3s}
-.env.open .letter{transform:translateY(-62%)}
+#intro.opening .tap,#intro.opening .intro-top{opacity:0;animation:none;transition:opacity .4s}
+.env.open .letter{transform:translateY(-58%)}
+.env.leave{transition:transform .7s cubic-bezier(.5,0,.75,0), opacity .5s ease .2s;transform:translateY(60svh) rotate(4deg);opacity:0}
+/* le carton qui s'agrandit jusqu'à devenir la page */
+.zoom{position:fixed;z-index:25;border-radius:6px;background:linear-gradient(#fffaf0,#f3ead6);color:var(--nuit);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;pointer-events:none}
+.zoom small{font-size:9px;letter-spacing:.3em;font-weight:700;color:#8a6a2a}
+.zoom b{font-family:"Great Vibes",cursive;font-weight:400;font-size:30px;line-height:1}
+.zoom span{font-size:10px;letter-spacing:.2em;font-weight:700}
 .tap{margin-top:34px;font-size:12px;letter-spacing:.25em;color:var(--or-clair);font-weight:600;display:flex;align-items:center;gap:10px;animation:pulse 1.8s ease-in-out infinite}
 .tap::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--or-clair);box-shadow:0 0 0 0 rgba(240,210,140,.7);animation:ping 1.8s infinite}
 @keyframes pulse{50%{opacity:.55}}
@@ -196,8 +207,17 @@ body::before{content:"";position:fixed;inset:-60px;z-index:0;background:url(asse
     <div class="env-front"></div>
     <div class="env-bottom"></div>
     <div class="flap"></div>
-    <div class="ribbon"></div>
-    <div class="seal"><i>9·12</i><em>RABAT</em></div>
+    <div class="ribbon v"></div><div class="ribbon h"></div>
+    <svg class="bow" viewBox="0 0 120 78" aria-hidden="true">
+      <defs><linearGradient id="bw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#29c05a"/><stop offset="1" stop-color="#14803a"/></linearGradient></defs>
+      <path d="M56 40 L40 74 L47 71 L50 78 L62 44Z" fill="url(#bw)" stroke="#FFD21F" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M64 40 L80 74 L73 71 L70 78 L58 44Z" fill="url(#bw)" stroke="#FFD21F" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M60 38 C44 8 8 4 10 28 C12 50 42 50 60 38Z" fill="url(#bw)" stroke="#FFD21F" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M60 38 C76 8 112 4 110 28 C108 50 78 50 60 38Z" fill="url(#bw)" stroke="#FFD21F" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M22 26 C30 18 42 22 50 32" fill="none" stroke="#FFD21F" stroke-width="2" opacity=".7"/>
+      <path d="M98 26 C90 18 78 22 70 32" fill="none" stroke="#FFD21F" stroke-width="2" opacity=".7"/>
+      <rect x="51" y="29" width="18" height="19" rx="6" fill="#FFD21F" stroke="#c99a12" stroke-width="1.5"/>
+    </svg>
   </div>
   <div class="tap" style="position:relative;z-index:2;text-shadow:0 2px 10px #000,0 0 4px #000"><span><span class="t-touch">TOUCHEZ</span><span class="t-click">CLIQUEZ</span> POUR OUVRIR</span></div>
 </div>
@@ -254,9 +274,10 @@ body::before{content:"";position:fixed;inset:-60px;z-index:0;background:url(asse
       <span><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>ANIMATION</span>
     </div>
     <div class="btns">
-      <button class="btn ghost" id="cal">
+      <a class="btn ghost" id="cal" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>
-        AJOUTER À MON AGENDA</button>
+        AJOUTER À MON AGENDA</a>
+      <p class="small" style="margin-top:8px">Google Agenda s'ouvre : touchez « Enregistrer ».</p>
     </div>
   </section>
 
@@ -343,12 +364,37 @@ const MAX_SIDE = 2400, JPEG_Q = 0.88;
 /* ===== Ouverture ===== */
 const intro = document.getElementById('intro'), env = document.getElementById('env');
 let opened = false;
-function openInvite(){
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+async function openInvite(){
   if(opened) return; opened = true;
-  env.classList.add('open'); intro.classList.add('opening');
-  setTimeout(()=>{ confetti(); }, 900);
-  setTimeout(()=>{ intro.classList.add('gone'); document.body.classList.remove('locked'); window.scrollTo(0,0); }, 1700);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  intro.classList.add('opening');
+  if(reduce){ finish(); return; }
+  env.classList.add('untie');                 // 1. le nœud saute, le ruban se détache
+  await wait(450);
+  env.classList.add('open');                  // 2. le rabat s'ouvre, le carton sort
+  await wait(1500);
+  const letter = env.querySelector('.letter'), r = letter.getBoundingClientRect();
+  const z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = letter.innerHTML;
+  Object.assign(z.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});
+  document.body.appendChild(z); letter.style.visibility = 'hidden';
+  env.classList.add('leave');                 // 3. l'enveloppe tombe
+  document.body.classList.remove('locked'); window.scrollTo(0,0);
+  const W = innerWidth, H = innerHeight;
+  // 4. le carton monte au centre puis s'agrandit jusqu'à remplir l'écran, et devient la nuit de la page
+  const anim = z.animate([
+    {left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',borderRadius:'6px'},
+    {left:(W-r.width*1.15)/2+'px',top:(H-r.height*1.15)/2+'px',width:r.width*1.15+'px',height:r.height*1.15+'px',borderRadius:'8px',offset:.35},
+    {left:'0px',top:'0px',width:W+'px',height:H+'px',borderRadius:'0px'}
+  ],{duration:1000,easing:'cubic-bezier(.65,0,.35,1)',fill:'forwards'});
+  await anim.finished;
+  intro.style.transition='none'; intro.classList.add('gone');
+  // 5. le carton se soulève vers le haut et dévoile l'invitation
+  z.style.boxShadow='0 30px 60px rgba(0,0,0,.6)';
+  z.animate([{transform:'translateY(0)'},{transform:'translateY(-105%)'}],{duration:750,easing:'cubic-bezier(.7,0,.3,1)',fill:'forwards'}).finished.then(()=>z.remove());
+  setTimeout(()=>confetti(),300);
 }
+function finish(){ intro.classList.add('gone'); document.body.classList.remove('locked'); window.scrollTo(0,0); }
 intro.addEventListener('click', openInvite);
 intro.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openInvite(); });
 if(location.hash==='#ouvert'){ intro.classList.add('gone'); document.body.classList.remove('locked'); opened=true; }
@@ -421,13 +467,12 @@ tick(); setInterval(tick,1000);
 document.getElementById('map').href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(EVENT.mapsQuery);
 
 /* ===== Agenda : Google Agenda ===== */
-document.getElementById('cal').addEventListener('click', ()=>{
+(()=>{
   const f = s => new Date(s).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-  // Partout (iPhone, Android, ordinateur) : Google Agenda s'ouvre, rien n'est téléchargé.
-  const g = "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(EVENT.title)+
-    "&dates="+f(EVENT.start)+"/"+f(EVENT.end)+"&location="+encodeURIComponent(EVENT.place)+"&details="+encodeURIComponent("Venez tout en couleur !");
-  window.open(g,"_blank","noopener");
-});
+  // Partout : un lien Google Agenda pré-rempli, rien n'est téléchargé.
+  document.getElementById('cal').href = "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(EVENT.title)+
+    "&dates="+f(EVENT.start)+"/"+f(EVENT.end)+"&ctz=Africa/Casablanca&location="+encodeURIComponent(EVENT.place)+"&details="+encodeURIComponent("Venez tout en couleur !");
+})();
 
 /* ===== Photos → Drive ===== */
 const fileIn = document.getElementById('file'), statusEl = document.getElementById('status'), bar = document.getElementById('bar');
