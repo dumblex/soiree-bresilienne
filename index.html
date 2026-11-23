@@ -34,6 +34,9 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 #intro::before{content:"";position:absolute;inset:-40px;z-index:-1;background:url(assets/scene.jpg) center/cover;filter:blur(22px) brightness(.55) saturate(1.2)}
 .intro-top{text-align:center;margin-bottom:34px;padding:0 16px}
 .intro-top .kicker{font-size:11px;letter-spacing:.32em;color:var(--or-clair);font-weight:600}
+.intro-logos{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.intro-logos img{width:min(34vw,140px);height:auto;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.intro-logos span{font-family:Georgia,serif;font-style:italic;font-size:24px;color:var(--or-clair);text-shadow:0 2px 8px #000}
 .intro-top h1{font-family:"Great Vibes",cursive;font-weight:400;font-size:44px;color:var(--creme);margin-top:6px;line-height:1.1}
 
 .env{position:relative;width:min(84vw,340px,92svh);aspect-ratio:1.45;perspective:1200px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -183,7 +186,7 @@ body::before{content:"";position:fixed;inset:-60px;z-index:0;background:url(asse
 .t-click{display:none}
 @media (hover:hover) and (pointer:fine){.t-touch{display:none}.t-click{display:inline}}
 @media (min-width:900px){.env{width:min(440px,60svh*1.45)}.intro-top h1{font-size:56px}}
-@media (max-height:520px){.intro-top{margin-bottom:10px}.intro-top h1{font-size:30px}.tap{margin-top:12px}.env{width:min(84vw,340px,52svh*1.45)}}
+@media (max-height:520px){.intro-logos img{width:min(24vw,96px)}.intro-logos{margin-bottom:6px}.intro-top{margin-bottom:10px}.intro-top h1{font-size:30px}.tap{margin-top:12px}.env{width:min(84vw,340px,52svh*1.45)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.reveal{opacity:1;transform:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -198,7 +201,7 @@ body::before{content:"";position:fixed;inset:-60px;z-index:0;background:url(asse
   <img class="deco" src="assets/lanterns-br.webp" alt="" style="right:0;bottom:0;width:min(38vw,32svh)">
   <div class="garland" data-bulbs="11"></div>
   <div class="intro-top" style="position:relative;z-index:2">
-    <div class="kicker">TOTALENERGIES &amp; ADM VALUE</div>
+    <div class="intro-logos"><img src="assets/te-card.png" alt="TotalEnergies"><span>&amp;</span><img src="assets/adm-card.png" alt="ADM Value"></div>
     <h1 id="hello">Vous êtes invités</h1>
   </div>
   <div class="env" id="env" style="z-index:2">
