@@ -45,8 +45,8 @@ input{height:48px;border-radius:10px;border:1px solid rgba(214,175,92,.6);backgr
 <div id="main" hidden>
   <div id="stats">…</div>
   <div id="reader"></div>
-  <div class="manual"><input id="manual" maxlength="5" placeholder="CODE" autocomplete="off"><button class="btn" id="go">OK</button></div>
-  <p class="hint">Pas de QR ? Tapez le code à 5 lettres écrit sous le QR de l'invité.</p>
+  <div class="manual"><input id="manual" maxlength="6" placeholder="CODE" autocomplete="off"><button class="btn" id="go">OK</button></div>
+  <p class="hint">Pas de QR ? Tapez le code à 6 chiffres écrit sous le QR de l'invité.</p>
 </div>
 
 <div id="result"><div class="icon" id="r-icon"></div><div class="name" id="r-name"></div><div class="team" id="r-team"></div><div class="msg" id="r-msg"></div><div class="next">Touchez pour scanner le suivant</div></div>
@@ -79,7 +79,7 @@ async function refreshStats(){ const j = await api({action:"stats",pin:PIN}).cat
 function codeOf(raw){
   raw = String(raw||'').trim();
   try{ const c = new URL(raw).searchParams.get('c'); if(c) return c.toUpperCase(); }catch(e){}
-  return raw.toUpperCase().replace(/^SB26:/,'').replace(/[^A-Z0-9]/g,'').slice(0,5);
+  return raw.toUpperCase().replace(/^SB26:/,'').replace(/[^A-Z0-9]/g,'').slice(0,6);
 }
 async function check(raw){
   if(busy) return; busy = true; raw = codeOf(raw);

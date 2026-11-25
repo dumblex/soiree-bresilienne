@@ -86,6 +86,15 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 .zoom small{font-size:9px;letter-spacing:.3em;font-weight:700;color:#8a6a2a}
 .zoom b{font-family:"Great Vibes",cursive;font-weight:400;font-size:30px;line-height:1}
 .zoom span{font-size:10px;letter-spacing:.2em;font-weight:700}
+.codebox{position:relative;z-index:2;margin-top:26px;text-align:center;padding:0 16px}
+.codebox label{display:block;font-size:12px;letter-spacing:.25em;color:var(--or-clair);font-weight:600;margin-bottom:10px;text-shadow:0 2px 10px #000}
+.codebox .row{display:flex;gap:8px;justify-content:center;align-items:center}
+.codebox .btn{margin:0;height:50px;min-height:50px;padding:0 20px}
+.codebox input{max-width:46vw}
+.codebox input{height:50px;width:170px;border-radius:12px;border:1px solid var(--or);background:rgba(0,0,0,.35);color:var(--creme);font:inherit;font-size:24px;font-weight:700;text-align:center;letter-spacing:.3em}
+.codebox input:focus{outline:2px solid var(--or-clair);outline-offset:2px}
+.codebox .err{min-height:18px;margin-top:8px;font-size:13px;color:#ffd0c4;text-shadow:0 1px 6px #000}
+#intro.opening .codebox{opacity:0;transition:opacity .4s}
 .tap{margin-top:34px;font-size:12px;letter-spacing:.25em;color:var(--or-clair);font-weight:600;display:flex;align-items:center;gap:10px;animation:pulse 1.8s ease-in-out infinite}
 .tap::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--or-clair);box-shadow:0 0 0 0 rgba(240,210,140,.7);animation:ping 1.8s infinite}
 @keyframes pulse{50%{opacity:.55}}
@@ -191,7 +200,7 @@ body::before{content:"";position:fixed;inset:-60px;z-index:0;background:url(asse
 .t-click{display:none}
 @media (hover:hover) and (pointer:fine){.t-touch{display:none}.t-click{display:inline}}
 @media (min-width:900px){.env{width:min(440px,60svh*1.45)}.intro-top h1{font-size:56px}}
-@media (max-height:520px){.intro-logos img{width:min(24vw,96px)}.intro-logos{margin-bottom:6px}.intro-top{margin-bottom:10px}.intro-top h1{font-size:30px}.tap{margin-top:12px}.env{width:min(84vw,340px,52svh*1.45)}}
+@media (max-height:520px){#intro.needcode .env{width:min(84vw,300px,36svh*1.45)}.codebox{margin-top:10px}.codebox label{margin-bottom:5px}.codebox .err{margin-top:4px;min-height:14px}.intro-logos img{width:min(24vw,96px)}.intro-logos{margin-bottom:6px}.intro-top{margin-bottom:10px}.intro-top h1{font-size:30px}.tap{margin-top:12px}.env{width:min(84vw,340px,52svh*1.45)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.reveal{opacity:1;transform:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -227,7 +236,12 @@ body::before{content:"";position:fixed;inset:-60px;z-index:0;background:url(asse
       <rect x="51" y="29" width="18" height="19" rx="6" fill="#E8431D" stroke="#fff" stroke-width="2"/>
     </svg>
   </div>
-  <div class="tap" style="position:relative;z-index:2;text-shadow:0 2px 10px #000,0 0 4px #000"><span><span class="t-touch">TOUCHEZ</span><span class="t-click">CLIQUEZ</span> POUR OUVRIR</span></div>
+  <form class="codebox" id="codebox" hidden autocomplete="off">
+    <label for="codein">VOTRE CODE D'INVITATION</label>
+    <div class="row"><input id="codein" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" aria-label="Code à 6 chiffres"><button class="btn" id="codego">OUVRIR</button></div>
+    <div class="err" id="codeerr" aria-live="polite"></div>
+  </form>
+  <div class="tap" id="tap" style="position:relative;z-index:2;text-shadow:0 2px 10px #000,0 0 4px #000"><span><span class="t-touch">TOUCHEZ</span><span class="t-click">CLIQUEZ</span> POUR OUVRIR</span></div>
 </div>
 
 <canvas id="confetti"></canvas>
@@ -403,8 +417,9 @@ async function openInvite(){
   setTimeout(()=>confetti(),300);
 }
 function finish(){ intro.classList.add('gone'); document.body.classList.remove('locked'); window.scrollTo(0,0); }
-intro.addEventListener('click', openInvite);
-intro.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openInvite(); });
+let needCode = false;
+intro.addEventListener('click', ()=>{ if(!needCode) openInvite(); });
+intro.addEventListener('keydown', e=>{ if(!needCode && (e.key==='Enter'||e.key===' ')) openInvite(); });
 if(location.hash==='#ouvert'){ intro.classList.add('gone'); document.body.classList.remove('locked'); opened=true; }
 
 /* ===== Invitation personnelle (?i=CODE) ===== */
@@ -412,7 +427,12 @@ async function api(body){
   const r = await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});
   return r.json();
 }
-const CODE = (new URLSearchParams(location.search).get('i')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+// Code : 6 chiffres (lien commun + code tapé), ou l'ancien format 5 caractères (?i=XXXXX).
+const okCode = c => /^(\d{6}|[A-Z0-9]{5})$/.test(c);
+const clean = c => String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+let CODE = clean(new URLSearchParams(location.search).get('i'));
+if(!okCode(CODE)){ try{ CODE = clean(localStorage.getItem('sb26code')); }catch(e){ CODE=''; } }
+if(!okCode(CODE)) CODE = '';
 let guest = null;
 const esc = t => String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function showRsvp(rep){
@@ -425,9 +445,7 @@ function showRsvp(rep){
     document.getElementById('code').textContent = CODE;
   }
 }
-if(API_URL && CODE.length===5){
-  api({action:"guest", i:CODE}).then(j=>{
-    if(!j.ok) return;
+function applyGuest(j){
     guest = j;
     const name = String(j.prenom||'').trim();
     if(name){
@@ -440,8 +458,31 @@ if(API_URL && CODE.length===5){
     document.getElementById('rsvp').hidden = false;
     document.getElementById('photos').hidden = false;
     showRsvp(j.reponse||'');
-  }).catch(()=>{});
 }
+function remember(c){ try{ localStorage.setItem('sb26code',c); }catch(e){} }
+if(API_URL && CODE){
+  api({action:"guest", i:CODE}).then(j=>{ if(j.ok){ applyGuest(j); remember(CODE); } else askCode(); }).catch(()=>{});
+} else if(API_URL && !opened){ askCode(); }
+function askCode(){
+  if(opened) return;
+  needCode = true; CODE = ''; intro.classList.add('needcode');
+  document.getElementById('codebox').hidden = false;
+  document.getElementById('tap').hidden = true;
+}
+document.getElementById('codebox').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const inp = document.getElementById('codein'), err = document.getElementById('codeerr'), go = document.getElementById('codego');
+  const c = clean(inp.value);
+  if(!/^\d{6}$/.test(c)){ err.textContent = "Le code a 6 chiffres."; return; }
+  err.textContent = "Ouverture…"; go.disabled = true;
+  try{
+    const j = await api({action:"guest", i:c});
+    if(!j.ok){ err.textContent = "Code inconnu. Vérifiez les 6 chiffres."; go.disabled = false; return; }
+    CODE = c; remember(c); applyGuest(j); err.textContent = "";
+    document.getElementById('codebox').hidden = true; needCode = false;
+    inp.blur(); await wait(700); openInvite();
+  }catch(x){ err.textContent = "Pas de connexion. Réessayez."; go.disabled = false; }
+});
 document.querySelectorAll('[data-r]').forEach(b=>b.addEventListener('click', async ()=>{
   const st = document.getElementById('r-status'); st.textContent = "Envoi…";
   document.querySelectorAll('[data-r]').forEach(x=>x.disabled=true);
