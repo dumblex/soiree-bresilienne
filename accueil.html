@@ -72,7 +72,7 @@ async function login(p){
   const c = new URLSearchParams(location.search).get('c');
   if(c){ history.replaceState(null,'',location.pathname); check(c); }
 }
-function renderStats(j){ document.getElementById('stats').textContent = `${j.presents} présents · ${j.oui} confirmés · ${j.invites} invités`; }
+function renderStats(j){ document.getElementById('stats').textContent = `${j.presents} présents · ${j.oui} confirmés · ${j.ouverts ?? '?'} ouvertes · ${j.invites} invités`; }
 async function refreshStats(){ const j = await api({action:"stats",pin:PIN}).catch(()=>null); if(j&&j.ok) renderStats(j); }
 
 // Accepte : l'URL du QR (…/accueil.html?c=CODE), l'ancien format SB26:CODE, ou le code tapé.
