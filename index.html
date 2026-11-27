@@ -461,7 +461,13 @@ function applyGuest(j){
 }
 function remember(c){ try{ localStorage.setItem('sb26code',c); }catch(e){} }
 if(API_URL && CODE){
-  api({action:"guest", i:CODE}).then(j=>{ if(j.ok){ applyGuest(j); remember(CODE); } else askCode(); }).catch(()=>{});
+  api({action:"guest", i:CODE}).then(j=>{
+    if(j.ok){ applyGuest(j); remember(CODE); return; }
+    // Code gardé ou lien ?i= qui n'existe plus : on l'oublie et on redemande un code,
+    // même si l'enveloppe a déjà été touchée avant la réponse du serveur.
+    try{ localStorage.removeItem('sb26code'); }catch(e){}
+    if(opened) location.replace(location.pathname); else askCode();
+  }).catch(()=>{});
 } else if(API_URL && !opened){ askCode(); }
 function askCode(){
   if(opened) return;
